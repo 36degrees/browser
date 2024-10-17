@@ -34,6 +34,7 @@ class URL:
         # Build and send the request
         request = "GET {} HTTP/1.1\r\n".format(self.path)
         request += "Host: {}\r\n".format(self.host)
+        request += "User-Agent: MyTestBrowser\r\n"
         request += "Connection: close\r\n"
         request += "\r\n"
 
