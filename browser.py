@@ -32,8 +32,9 @@ class URL:
             s = ctx.wrap_socket(s, server_hostname=self.host)
 
         # Build and send the request
-        request = "GET {} HTTP/1.0\r\n".format(self.path)
+        request = "GET {} HTTP/1.1\r\n".format(self.path)
         request += "Host: {}\r\n".format(self.host)
+        request += "Connection: close\r\n"
         request += "\r\n"
 
         s.send(request.encode("utf8"))
