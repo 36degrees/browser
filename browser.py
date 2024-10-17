@@ -1,3 +1,4 @@
+import base64
 import socket
 import ssl
 
@@ -92,7 +93,10 @@ class URL:
             return f.read()
         
     def data_request(self):
-        return self.body
+        if self.mimetype.endswith(";base64"):
+            return base64.b64decode(self.body).decode('utf-8')
+        else:
+            return self.body
 
 def show(body):
     in_tag = False
