@@ -3,6 +3,12 @@ import ssl
 
 class URL:
     def __init__(self, url):
+
+        if url.startswith('data:'):
+            self.scheme, url = url.split(":", 1)
+            self.mimetype, self.body = url.split(",", 1)
+            return
+
         self.scheme, url = url.split("://", 1)
 
         self.host, url = url.split("/", 1)
@@ -22,6 +28,8 @@ class URL:
                 return self.http_request()
             case 'file':
                 return self.file_request()
+            case 'data':
+                return self.data_request()
             case _:
                 raise ValueError("Unsupported scheme")
 
@@ -82,6 +90,9 @@ class URL:
     def file_request(self):
         with open(self.path) as f:
             return f.read()
+        
+    def data_request(self):
+        return self.body
 
 def show(body):
     in_tag = False
