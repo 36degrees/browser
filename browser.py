@@ -4,7 +4,6 @@ import ssl
 class URL:
     def __init__(self, url):
         self.scheme, url = url.split("://", 1)
-        assert self.scheme in ["http", "https"]
 
         self.host, url = url.split("/", 1)
         self.path = "/" + url
@@ -16,8 +15,17 @@ class URL:
             self.port = 443
         else:
             self.port = 80
-    
+
     def request(self):
+        match self.scheme:
+            case 'http' | 'https':
+                return self.http_request()
+            case 'file':
+                return self.file_request()
+            case _:
+                raise ValueError("Unsupported scheme")
+
+    def http_request(self):
         # Connect to socket
         s = socket.socket(
             family=socket.AF_INET,
@@ -70,6 +78,10 @@ class URL:
         s.close()
 
         return content
+    
+    def file_request(self):
+        with open(self.path) as f:
+            return f.read()
 
 def show(body):
     in_tag = False
