@@ -31,11 +31,18 @@ class URL:
             ctx = ssl.create_default_context()
             s = ctx.wrap_socket(s, server_hostname=self.host)
 
+        headers = {
+            'Host'       : self.host,
+            'User-Agent' : 'MyTestBrowser',
+            'Connection' : 'close'
+        }
+
         # Build and send the request
         request = "GET {} HTTP/1.1\r\n".format(self.path)
-        request += "Host: {}\r\n".format(self.host)
-        request += "User-Agent: MyTestBrowser\r\n"
-        request += "Connection: close\r\n"
+
+        for key, value in headers.items():
+            request += f'{key}: {value}\r\n'
+
         request += "\r\n"
 
         s.send(request.encode("utf8"))
