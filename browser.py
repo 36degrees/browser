@@ -3,7 +3,13 @@ import socket
 import ssl
 
 class URL:
+    is_view_source = False
+
     def __init__(self, url):
+
+        if url.startswith('view-source:'):
+            self.is_view_source = True
+            url = url.removeprefix('view-source:')
 
         if url.startswith('data:'):
             self.scheme, url = url.split(":", 1)
@@ -110,7 +116,10 @@ def show(body):
 
 def load(url):
     body = url.request()
-    show(body)
+    if url.is_view_source:
+        print(body)
+    else:
+        show(body)
 
 if __name__ == "__main__":
     import sys
