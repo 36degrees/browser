@@ -1,13 +1,14 @@
 from browser.request import Request
-
-import socket
-import ssl
-
+from browser.socket import create_socket
 class HttpRequest(Request):
     def __init__(self, url):
         super().__init__(url)
 
-        s = self.__create_socket()
+        s = create_socket(
+            self.url.host,
+            self.url.port,
+            self.url.scheme == "https"
+        )
 
         headers = {
             'Host'       : self.url.host,
@@ -47,19 +48,3 @@ class HttpRequest(Request):
 
         # Grab response body and clean up
         self.content = response.read()
-        s.close()
-
-    def __create_socket(self):
-        s = socket.socket(
-            family=socket.AF_INET,
-            type=socket.SOCK_STREAM,
-            proto=socket.IPPROTO_TCP
-        )
-
-        s.connect((self.url.host, self.url.port))
-
-        if self.url.scheme == "https":
-            ctx = ssl.create_default_context()
-            s = ctx.wrap_socket(s, server_hostname=self.url.host)
-
-        return s
