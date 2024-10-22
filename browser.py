@@ -14,9 +14,9 @@ def show(body):
 def load(url):
     request = Request.factory(url)
     if url.is_view_source:
-        print(request.open())
+        print(request.content)
     else:
-        show(request.open())
+        show(request.content)
 
 if __name__ == "__main__":
     import sys

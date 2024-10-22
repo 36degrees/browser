@@ -1,4 +1,5 @@
 class Request:
+
     def factory(url):
         match url.scheme:
             case 'http' | 'https':
@@ -15,3 +16,5 @@ class Request:
             
     def __init__(self, url):
         self.url = url
+        self.headers = {}
+        self.content = ""
