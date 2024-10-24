@@ -12,8 +12,11 @@ class Browser:
     
     def __init__(self):
         self.window = tkinter.Tk()
+
         self.width = INITIAL_WIDTH
         self.height = INITIAL_HEIGHT
+        self.pageheight = 0
+
         self.canvas = tkinter.Canvas(
             self.window, 
             width=self.width,
@@ -76,6 +79,8 @@ class Browser:
             if cursor_x >= self.width - HSTEP:
                 cursor_y += VSTEP
                 cursor_x = HSTEP
+
+        self.pageheight = cursor_y
         return display_list
 
     def configure(self, e):
@@ -83,19 +88,27 @@ class Browser:
         self.width = e.width
         print(f"resizing to {self.width} * {self.height}")
         text = lex(self.response.content)
-        self.display_list = self.layout(text)
+        self.display_list = self.layout(text.strip())
         self.draw()
 
     def scrollup(self, e):
-        self.scroll = max(self.scroll - SCROLL_STEP, 0)
-        self.draw()
+        self.scroll_by_delta(-1)
 
     def scrolldown(self, e):
-        self.scroll += SCROLL_STEP
-        self.draw()
+        self.scroll_by_delta(1)
 
     def scrollwheel(self, e):
-        self.scroll = max(self.scroll - (e.delta * 100), 0)
+        self.scroll_by_delta(e.delta * -1)
+
+    def scroll_by_delta(self, delta):
+        # Clamp scrolling to the beginning and end of the document
+        self.scroll = max(
+            0,
+            min(
+                self.scroll + (delta * 100),
+                self.pageheight - self.height + HSTEP
+            )
+        )
         self.draw()
 
 def lex(body):
