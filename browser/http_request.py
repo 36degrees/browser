@@ -47,4 +47,9 @@ class HttpRequest(Request):
         self.headers = response_headers
 
         # Grab response body and clean up
-        self.content = response.read(int(response_headers['content-length'])).decode(encoding='utf-8')
+        if 'content-length' in response_headers:
+            content_length = int(response_headers["content-length"])
+        else:
+            content_length = -1
+
+        self.content = response.read(content_length).decode(encoding='utf-8')
