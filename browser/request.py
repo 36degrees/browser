@@ -18,3 +18,4 @@ class Request:
         self.url = url
         self.headers = {}
         self.content = ""
+        self.status = 0

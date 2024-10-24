@@ -12,11 +12,20 @@ def show(body):
             print(c, end="")
 
 def load(url):
-    request = Request.factory(url)
+    response = Request.factory(url)
+
+    redirect_count = 0
+    while 300 <= int(response.status) <= 399 and 'location' in response.headers:
+        if redirect_count > 10:
+            raise RuntimeError('Excessive redirects')
+        print(f'Redirecting to {response.headers['location']}')
+        response = Request.factory(URL(response.headers['location']))
+        redirect_count += 1
+
     if url.is_view_source:
-        print(request.content)
+        print(response.content)
     else:
-        show(request.content)
+        show(response.content)
 
 if __name__ == "__main__":
     import sys

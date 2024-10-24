@@ -30,7 +30,8 @@ class HttpRequest(Request):
         response = s.makefile("r", encoding="utf8", newline="\r\n")
 
         statusline = response.readline()
-        version, status, explanation = statusline.split(" ", 2)
+        print(f'Statusline: {statusline}')
+        version, self.status, explanation = statusline.split(" ", 2)
 
         # Process response headers
         response_headers = {}
