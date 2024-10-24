@@ -1,3 +1,5 @@
+import gzip
+
 from browser.request import Request
 from browser.socket import create_socket
 class HttpRequest(Request):
@@ -12,7 +14,8 @@ class HttpRequest(Request):
 
         headers = {
             'Host'       : self.url.host,
-            'User-Agent' : 'MyTestBrowser'
+            'User-Agent' : 'MyTestBrowser',
+            'Accept-Encoding': 'gzip'
         }
 
         # Build and send the request
@@ -40,10 +43,6 @@ class HttpRequest(Request):
             header, value = line.split(":", 1)
             response_headers[header.casefold()] = value.strip()
 
-        # Detect things we can't handle
-        assert "transfer-encoding" not in response_headers
-        assert "content-encoding" not in response_headers
-
         self.headers = response_headers
 
         # Grab response body and clean up
@@ -52,4 +51,22 @@ class HttpRequest(Request):
         else:
             content_length = -1
 
-        self.content = response.read(content_length).decode(encoding='utf-8')
+        if response_headers.get('transfer-encoding') == 'chunked':
+            content = b''
+            while True:
+                chunk_length = response.readline().strip().decode(encoding='utf-8')
+                if chunk_length == '0' or not chunk_length:
+                    response.readline()
+                    break
+
+                content += response.read(int(chunk_length, 16))
+
+                # Consume trailing new line
+                response.read(2)
+        else:
+            content = response.read(content_length)
+
+        if response_headers.get('content-encoding') == 'gzip':
+            content = gzip.decompress(content)
+
+        self.content = content.decode(encoding='utf-8')
