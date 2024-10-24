@@ -65,6 +65,23 @@ class Browser:
             if y + VSTEP < self.scroll: continue
             self.canvas.create_text(x, y - self.scroll, text=c)
 
+        self.render_scrollbar()
+
+    def render_scrollbar(self):
+        if self.pageheight < self.height:
+            return
+
+        size = round((self.height / self.pageheight) * self.height)
+        position = round((self.scroll / self.pageheight) * self.height)
+
+        self.canvas.create_rectangle(
+            self.width - 15,
+            position,
+            self.width,
+            position + size,
+            fill="blue"
+        )
+
     def layout(self, text):
         display_list = []
         cursor_x, cursor_y = HSTEP, VSTEP
@@ -88,7 +105,7 @@ class Browser:
         self.width = e.width
         print(f"resizing to {self.width} * {self.height}")
         text = lex(self.response.content)
-        self.display_list = self.layout(text.strip())
+        self.display_list = self.layout(text)
         self.draw()
 
     def scrollup(self, e):
@@ -121,7 +138,7 @@ def lex(body):
             in_tag = False
         elif not in_tag:
             text += c
-    return text
+    return text.strip()
 
 if __name__ == "__main__":
     import sys
