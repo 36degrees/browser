@@ -12,8 +12,7 @@ class HttpRequest(Request):
 
         headers = {
             'Host'       : self.url.host,
-            'User-Agent' : 'MyTestBrowser',
-            'Connection' : 'close'
+            'User-Agent' : 'MyTestBrowser'
         }
 
         # Build and send the request
@@ -27,16 +26,16 @@ class HttpRequest(Request):
         s.send(request.encode("utf8"))
 
         # Handle the response
-        response = s.makefile("r", encoding="utf8", newline="\r\n")
+        response = s.makefile("rb", encoding="utf8", newline="\r\n")
 
-        statusline = response.readline()
+        statusline = response.readline().decode(encoding='utf-8')
         print(f'Statusline: {statusline}')
         version, self.status, explanation = statusline.split(" ", 2)
 
         # Process response headers
         response_headers = {}
         while True:
-            line = response.readline()
+            line = response.readline().decode(encoding='utf-8')
             if line == "\r\n": break
             header, value = line.split(":", 1)
             response_headers[header.casefold()] = value.strip()
@@ -48,4 +47,4 @@ class HttpRequest(Request):
         self.headers = response_headers
 
         # Grab response body and clean up
-        self.content = response.read()
+        self.content = response.read(int(response_headers['content-length'])).decode(encoding='utf-8')

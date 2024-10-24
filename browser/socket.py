@@ -3,8 +3,9 @@ from functools import lru_cache
 import socket
 import ssl
 
+@lru_cache(maxsize=16)
 def create_socket(host, port, is_ssl):
-    print(f'Creating socket for {host}:{port}')
+    print(f'Creating socket for {host}:{port} (SSL: {is_ssl})')
     s = socket.socket(
         family=socket.AF_INET,
         type=socket.SOCK_STREAM,
