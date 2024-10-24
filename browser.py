@@ -21,6 +21,7 @@ class Browser:
 
         self.window.bind("<Up>", self.scrollup)
         self.window.bind("<Down>", self.scrolldown)
+        self.window.bind("<MouseWheel>", self.scrollwheel)
 
     def load(self, url_as_string):
         url = URL(url_as_string)
@@ -58,6 +59,10 @@ class Browser:
 
     def scrolldown(self, e):
         self.scroll += SCROLL_STEP
+        self.draw()
+
+    def scrollwheel(self, e):
+        self.scroll = max(self.scroll - (e.delta * 100), 0)
         self.draw()
 
 def lex(body):
