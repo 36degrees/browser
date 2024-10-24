@@ -1,3 +1,5 @@
+from urllib.parse import urljoin
+
 from browser.request import Request
 from browser.url import URL
 
@@ -11,15 +13,19 @@ def show(body):
         elif not in_tag:
             print(c, end="")
 
-def load(url):
+def load(url_as_string):
+    url = URL(url_as_string)
     response = Request.factory(url)
 
     redirect_count = 0
     while 300 <= int(response.status) <= 399 and 'location' in response.headers:
         if redirect_count > 10:
             raise RuntimeError('Excessive redirects')
-        print(f'Redirecting to {response.headers['location']}')
-        response = Request.factory(URL(response.headers['location']))
+        
+        destination = urljoin(url_as_string, response.headers['location'])
+        print(f'Redirecting to {destination}')
+
+        response = Request.factory(URL(destination))
         redirect_count += 1
 
     if url.is_view_source:
@@ -29,4 +35,4 @@ def load(url):
 
 if __name__ == "__main__":
     import sys
-    load(URL(sys.argv[1]))
+    load(sys.argv[1])
