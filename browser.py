@@ -60,11 +60,11 @@ class Browser:
 
     def draw(self):
         self.canvas.delete("all")
-        for x, y, c in self.display_list:
+        for x, y, c, font in self.display_list:
             # Skip off-canvas characters
             if y > self.scroll + self.height: continue
             if y + VSTEP < self.scroll: continue
-            self.canvas.create_text(x, y - self.scroll, text=c, anchor='nw')
+            self.canvas.create_text(x, y - self.scroll, text=c, font=font, anchor='nw')
 
         self.render_scrollbar()
 
@@ -83,30 +83,46 @@ class Browser:
             fill="blue"
         )
 
-    def layout(self, text):
-        font = tkinter.font.Font()
+    def layout(self, tokens):
+        weight = "normal"
+        style = "roman"
 
         display_list = []
         cursor_x, cursor_y = HSTEP, VSTEP
-        for word in text.split():
-            display_list.append((cursor_x, cursor_y, word))
-            w = font.measure(word)
+        for tok in tokens:
+                if isinstance(tok, Text):
+                    for word in tok.text.split():
+                        font = tkinter.font.Font(
+                            size=16,
+                            weight=weight,
+                            slant=style,
+                        )
+                        display_list.append((cursor_x, cursor_y, word, font))
+                        w = font.measure(word)
 
-            if cursor_x + w > self.width - HSTEP:
-                cursor_y += font.metrics("linespace") * 1.25
-                cursor_x = HSTEP
-            else:
-                cursor_x += w + font.measure(" ")
+                        if cursor_x + w > self.width - HSTEP:
+                            cursor_y += font.metrics("linespace") * 1.25
+                            cursor_x = HSTEP
+                        else:
+                            cursor_x += w + font.measure(" ")
 
-        self.pageheight = cursor_y
+                    self.pageheight = cursor_y
+                elif tok.tag == "i":
+                    style = "italic"
+                elif tok.tag == "/i":
+                    style = "roman"
+                elif tok.tag == "b":
+                    weight = "bold"
+                elif tok.tag == "/b":
+                    weight = "normal"
         return display_list
 
     def configure(self, e):
         self.height = e.height
         self.width = e.width
         print(f"resizing to {self.width} * {self.height}")
-        text = lex(self.response.content)
-        self.display_list = self.layout(text)
+        tokens = lex(self.response.content)
+        self.display_list = self.layout(tokens)
         self.draw()
 
     def scrollup(self, e):
@@ -129,17 +145,35 @@ class Browser:
         )
         self.draw()
 
+class Text:
+    def __init__(self, text):
+        self.text = text
+
+class Tag:
+    def __init__(self, tag):
+        self.tag = tag
+
 def lex(body):
-    text = ""
+    out = []
+    buffer = ""
     in_tag = False
+
     for c in body:
         if c == "<":
             in_tag = True
+            if buffer: out.append(Text(buffer))
+            buffer = ""
         elif c == ">":
             in_tag = False
-        elif not in_tag:
-            text += c
-    return text.strip()
+            out.append(Tag(buffer))
+            buffer = ""
+        else:
+            buffer += c
+
+    if not in_tag and buffer:
+        out.append(Text(buffer))
+
+    return out
 
 if __name__ == "__main__":
     import sys
