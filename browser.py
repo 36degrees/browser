@@ -1,4 +1,5 @@
 import tkinter
+import tkinter.font
 
 from urllib.parse import urljoin
 
@@ -63,7 +64,7 @@ class Browser:
             # Skip off-canvas characters
             if y > self.scroll + self.height: continue
             if y + VSTEP < self.scroll: continue
-            self.canvas.create_text(x, y - self.scroll, text=c)
+            self.canvas.create_text(x, y - self.scroll, text=c, anchor='nw')
 
         self.render_scrollbar()
 
@@ -83,19 +84,19 @@ class Browser:
         )
 
     def layout(self, text):
+        font = tkinter.font.Font()
+
         display_list = []
         cursor_x, cursor_y = HSTEP, VSTEP
-        for c in text:
-            if c == "\n":
-                cursor_x = 0
-                cursor_y += HSTEP * 2
-                continue
+        for word in text.split():
+            display_list.append((cursor_x, cursor_y, word))
+            w = font.measure(word)
 
-            display_list.append((cursor_x, cursor_y, c))
-            cursor_x += HSTEP
-            if cursor_x >= self.width - HSTEP:
-                cursor_y += VSTEP
+            if cursor_x + w > self.width - HSTEP:
+                cursor_y += font.metrics("linespace") * 1.25
                 cursor_x = HSTEP
+            else:
+                cursor_x += w + font.measure(" ")
 
         self.pageheight = cursor_y
         return display_list
