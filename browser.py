@@ -1,13 +1,14 @@
 import tkinter
-import tkinter.font
 
 from urllib.parse import urljoin
 
+from browser.layout import Layout, HSTEP, VSTEP
 from browser.request import Request
+from browser.tag import Tag
+from browser.text import Text
 from browser.url import URL
 
 INITIAL_WIDTH, INITIAL_HEIGHT = 800, 600
-HSTEP, VSTEP = 13, 18
 SCROLL_STEP = 100
 class Browser:
     
@@ -16,7 +17,6 @@ class Browser:
 
         self.width = INITIAL_WIDTH
         self.height = INITIAL_HEIGHT
-        self.pageheight = 0
 
         self.canvas = tkinter.Canvas(
             self.window, 
@@ -52,15 +52,15 @@ class Browser:
         if url.is_view_source:
             self.print(response.content)
         else:
-            text = lex(response.content)
-            self.display_list = self.layout(text)
+            tokens = lex(response.content)
+            self.layout = Layout(tokens, self.width)
             self.draw()
 
         self.response = response
 
     def draw(self):
         self.canvas.delete("all")
-        for x, y, c, font in self.display_list:
+        for x, y, c, font in self.layout.display_list:
             # Skip off-canvas characters
             if y > self.scroll + self.height: continue
             if y + VSTEP < self.scroll: continue
@@ -69,11 +69,11 @@ class Browser:
         self.render_scrollbar()
 
     def render_scrollbar(self):
-        if self.pageheight < self.height:
+        if self.layout.pageheight < self.height:
             return
 
-        size = round((self.height / self.pageheight) * self.height)
-        position = round((self.scroll / self.pageheight) * self.height)
+        size = round((self.height / self.layout.pageheight) * self.height)
+        position = round((self.scroll / self.layout.pageheight) * self.height)
 
         self.canvas.create_rectangle(
             self.width - 15,
@@ -83,46 +83,12 @@ class Browser:
             fill="blue"
         )
 
-    def layout(self, tokens):
-        weight = "normal"
-        style = "roman"
-
-        display_list = []
-        cursor_x, cursor_y = HSTEP, VSTEP
-        for tok in tokens:
-                if isinstance(tok, Text):
-                    for word in tok.text.split():
-                        font = tkinter.font.Font(
-                            size=16,
-                            weight=weight,
-                            slant=style,
-                        )
-                        display_list.append((cursor_x, cursor_y, word, font))
-                        w = font.measure(word)
-
-                        if cursor_x + w > self.width - HSTEP:
-                            cursor_y += font.metrics("linespace") * 1.25
-                            cursor_x = HSTEP
-                        else:
-                            cursor_x += w + font.measure(" ")
-
-                    self.pageheight = cursor_y
-                elif tok.tag == "i":
-                    style = "italic"
-                elif tok.tag == "/i":
-                    style = "roman"
-                elif tok.tag == "b":
-                    weight = "bold"
-                elif tok.tag == "/b":
-                    weight = "normal"
-        return display_list
-
     def configure(self, e):
         self.height = e.height
         self.width = e.width
         print(f"resizing to {self.width} * {self.height}")
         tokens = lex(self.response.content)
-        self.display_list = self.layout(tokens)
+        self.layout = Layout(tokens, self.width)
         self.draw()
 
     def scrollup(self, e):
@@ -140,18 +106,10 @@ class Browser:
             0,
             min(
                 self.scroll + (delta * 100),
-                self.pageheight - self.height + HSTEP
+                self.layout.pageheight - self.height + HSTEP
             )
         )
         self.draw()
-
-class Text:
-    def __init__(self, text):
-        self.text = text
-
-class Tag:
-    def __init__(self, tag):
-        self.tag = tag
 
 def lex(body):
     out = []
